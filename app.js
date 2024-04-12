@@ -10,23 +10,25 @@ app.use(cors())
 const dotenv = require('dotenv')
 dotenv.config()
 
-//Creo un middleware per la gestione centralizzata del token di auth
-const jwt = require('jsonwebtoken')
-function authenticateToken(req, res, next) {
+//Creo un middleware per la gestione centralizzata del token di Firebase
+const admin = require('./firebase-config')
+async function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
 
   if (token == null) return res.sendStatus(401)
 
-  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-    console.log(err)
-
-    if (err) return res.sendStatus(403)
-
-    req.user = user
-
-    next()
-  })
+  try {
+    const decodeValue = await admin.auth().verifyIdToken(token);
+    if (decodeValue) {
+      console.log(decodeValue);
+      return next();
+    }
+    return res.sendStatus(401).json({ message: 'Unauthorized' });
+  } catch (e) {
+    console.log(e)
+    return res.json({ message: 'Internal Error' });
+  }
 }
 
 //registro il middleware
@@ -50,38 +52,38 @@ app.get('/posts', (req, res) => {
 //La chiamata può andare volutamente in errore se si inserisce l'id 2 nella richiesta
 app.get('/posts/:postId', (req, res) => {
   const posts = {
-    data: 
-      {
-        id: req.params?.postId,
-        title: "First post",
-        description: "My first post."
-      }
+    data:
+    {
+      id: req.params?.postId,
+      title: "First post",
+      description: "My first post."
+    }
   }
 
-  if(req.params?.postId === "2")
+  if (req.params?.postId === "2")
     throw new Error('Il valore inserito non è ammesso.')
 
   res.send(posts)
 })
 
 //Aggiungo un esempio di chiamata POST, che ritorna un 201Created
-app.post('/posts', (req, res) => {  
+app.post('/posts', (req, res) => {
   res.status(201).end()
   res.send()
 })
 
 //Aggiungo un esempio di chiamata PUT
-app.put('/posts/:postId', (req, res) => {  
+app.put('/posts/:postId', (req, res) => {
   res.send()
 })
 
 //Aggiungo un esempio di chiamata PATCH
-app.patch('/posts/:postId', (req, res) => {  
+app.patch('/posts/:postId', (req, res) => {
   res.send()
 })
 
 //Aggiungo un esempio di chiamata DELETE
-app.delete('/posts/:postId', (req, res) => {  
+app.delete('/posts/:postId', (req, res) => {
   res.send()
 })
 
