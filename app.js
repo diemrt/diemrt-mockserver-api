@@ -24,6 +24,10 @@ app.get('/posts/:postId', (req, res) => {
         description: "My first post."
       }
   }
+
+  if(req.params?.postId === "2")
+    throw new Error('Il valore inserito non è ammesso.')
+
   res.send(posts)
 })
 
