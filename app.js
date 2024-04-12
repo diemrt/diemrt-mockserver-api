@@ -1,12 +1,36 @@
 //Inizializzo in modo standard express
 const express = require('express')
+var cors = require('cors')
 const app = express()
 const port = 3000
+app.use(cors())
 
 //Carico le configurazioni nel file .env
-//Nel file deve essere presente la variabile JWT_TOKEN=...
+//Nel file deve essere presente la variabile TOKEN_SECRET=...
 const dotenv = require('dotenv')
 dotenv.config()
+
+//Creo un middleware per la gestione centralizzata del token di auth
+const jwt = require('jsonwebtoken')
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
+
+  if (token == null) return res.sendStatus(401)
+
+  jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.user = user
+
+    next()
+  })
+}
+
+//registro il middleware
+app.use(authenticateToken)
 
 //Aggiungo un esempio di chiamata GET di una lista fittizia di post.
 app.get('/posts', (req, res) => {
