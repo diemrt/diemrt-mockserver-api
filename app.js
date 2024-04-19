@@ -18,17 +18,15 @@ async function authenticateToken(req, res, next) {
 
   if (token == null) return res.sendStatus(401)
 
-  try {
-    const decodeValue = await admin.auth().verifyIdToken(token);
-    if (decodeValue) {
-      console.log(decodeValue);
-      return next();
-    }
-    return res.sendStatus(401).json({ message: 'Unauthorized' });
-  } catch (e) {
-    console.log(e)
-    return res.json({ message: 'Internal Error' });
-  }
+  jwt.verify(token, process.env.API_TOKEN_SECRET, (err, user) => {
+    console.log(err)
+
+    if (err) return res.sendStatus(403)
+
+    req.user = user
+
+    next()
+  })
 }
 
 //registro il middleware
